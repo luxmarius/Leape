@@ -73,7 +73,7 @@
         </div>
         <div class="col-lg-12 col-md-12" style="width: 100%; margin-top: 40px;">
           <!-- Chatbot Iframe -->
-          <iframe src="http://127.0.0.1:5000/" width="100%" height="500px" style="border: none;"></iframe>
+          <div id="chatbot-root"></div>
         </div>
       </div>
     </div>
@@ -102,5 +102,62 @@
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+  
+    <script src="https://unpkg.com/react/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script> <!-- If you are using Axios -->
+<script type="text/babel">
+  // Your React Component Code here
+  'use strict';
+
+  const e = React.createElement;
+
+  class Chatbot extends React.Component {
+    constructor(props) {
+      super(props);
+      this.state = { userInput: '', answer: '' };
+      this.handleChange = this.handleChange.bind(this);
+      this.handleSubmit = this.handleSubmit.bind(this);
+    }
+
+    handleChange(event) {
+      this.setState({ userInput: event.target.value });
+    }
+
+    async handleSubmit(event) {
+      event.preventDefault();
+      const fullUrl = `https://us-central1-foerderpilot.cloudfunctions.net/foerderpilot?text="${encodeURIComponent(this.state.userInput)}"`;
+      try {
+        const response = await axios.get(fullUrl);
+        this.setState({ answer: response.data });
+      } catch (error) {
+        console.error('Error fetching the chatbot response:', error);
+        this.setState({ answer: 'Failed to get response' });
+      }
+    }
+
+    render() {
+      return e('div', null,
+        e('form', { onSubmit: this.handleSubmit },
+          e('input', {
+            type: 'text',
+            value: this.state.userInput,
+            onChange: this.handleChange,
+            placeholder: 'Type your message here'
+          }),
+          e('button', { type: 'submit' }, 'Send')
+        ),
+        this.state.answer && e('div', null, `Bot's response: ${this.state.answer}`)
+      );
+    }
+  }
+
+  // Replace 'chatbot-root' with the ID of the container where you want to render your React component.
+  const domContainer = document.querySelector('#chatbot-root');
+  ReactDOM.render(e(Chatbot), domContainer);
+</script>
+
+  
+  
   </body>
 </html>
